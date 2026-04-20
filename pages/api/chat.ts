@@ -10,9 +10,13 @@ export default async function handler(
 
   try {
     const { messages, model } = req.body;
-    const API_KEY = process.env.NEXT_PUBLIC_AI_BUILDER_TOKEN;
+    const API_KEY = process.env.AI_BUILDER_TOKEN || process.env.NEXT_PUBLIC_AI_BUILDER_TOKEN;
+
+    console.log('API Key configured:', !!API_KEY);
+    console.log('Using model:', model);
 
     if (!API_KEY) {
+      console.error('API key not configured');
       return res.status(500).json({ error: 'API key not configured' });
     }
 
