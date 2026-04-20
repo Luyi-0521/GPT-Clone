@@ -41,37 +41,46 @@ export const chatWithAI = async (
 ): Promise<string> => {
   try {
     console.log('Starting chatWithAI function...');
-    console.log('Using local API proxy');
+    console.log('API Key configured:', !!API_KEY);
+    console.log('API Key length:', API_KEY.length);
+    console.log('API URL:', `${API_BASE_URL}/v1/chat/completions`);
     console.log('Model:', model);
     console.log('Messages:', messages);
 
-    // 调用本地API路由
-    const response = await fetch('/api/chat', {
+    // 过滤掉空消息
+    const filteredMessages = messages.filter(msg => 
+      msg && typeof msg.content === 'string' && msg.content.trim() !== ''
+    );
+
+    console.log('Filtered messages:', filteredMessages);
+    console.log('Number of filtered messages:', filteredMessages.length);
+
+    // 直接调用AI Builders API
+    const response = await fetch(`${API_BASE_URL}/v1/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        messages: messages.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-        })),
-        model,
+        model: model || 'grok-4-fast',
+        messages: filteredMessages,
+        temperature: 0.7,
       }),
     });
 
-    console.log('Local API proxy response status:', response.status);
+    console.log('AI Builders API response status:', response.status);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('Local API proxy error:', errorData);
+      console.error('AI Builders API error:', errorData);
       // 处理AI Builders API的错误格式
       const errorMessage = errorData.detail || errorData.error?.message || '';
       throw new Error(`API error: ${response.statusText} - ${errorMessage}`);
     }
 
     const data = await response.json();
-    console.log('Local API proxy response data:', data);
+    console.log('AI Builders API response data:', data);
     return data.choices[0].message.content;
   } catch (error) {
     console.error('Error calling AI API:', error);
