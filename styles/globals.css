@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans text-gray-900 bg-gray-50;
+  }
+}
+
+@layer components {
+  .message-bubble {
+    @apply max-w-[80%] p-4 rounded-lg shadow-sm;
+  }
+  
+  .user-message {
+    @apply bg-blue-600 text-white rounded-tr-none;
+  }
+  
+  .ai-message {
+    @apply bg-white text-gray-900 rounded-tl-none border border-gray-200;
+  }
+}
