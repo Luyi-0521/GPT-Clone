@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  // 其他配置...
+  // Vercel会自动处理部署，不需要静态导出
 }
 
 module.exports = nextConfig
