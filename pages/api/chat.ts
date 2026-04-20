@@ -26,6 +26,20 @@ export default async function handler(
         msg && typeof msg.content === 'string' && msg.content.trim() !== ''
     );
 
+    const currentDate = new Date().toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long'
+    });
+
+    const systemMessage = {
+      role: 'system',
+      content: `你是一个有帮助的AI助手。今天是${currentDate}。请根据当前日期回答用户的问题。`
+    };
+
+    const messagesWithSystem = [systemMessage, ...filteredMessages];
+
     const response = await fetch(
       'https://space.ai-builders.com/backend/v1/chat/completions',
       {
@@ -36,7 +50,7 @@ export default async function handler(
         },
         body: JSON.stringify({
           model: model || 'grok-4-fast',
-          messages: filteredMessages,
+          messages: messagesWithSystem,
           temperature: 0.7,
         }),
       }
