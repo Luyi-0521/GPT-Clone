@@ -14,8 +14,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
   const [textareaHeight, setTextareaHeight] = useState(3);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [editHistory, setEditHistory] = useState<{[key: string]: string[]}>({});
+  const [historyIndex, setHistoryIndex] = useState<{[key: string]: number}>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const models = [
     { id: 'grok-4-fast', name: 'Grok-4-fast' },
@@ -131,7 +134,83 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
 
   const handleStartEdit = (message: Message) => {
     setEditingMessageId(message.id);
-    setEditContent(message.content);
+
+    const originalContent = message.content;
+    setEditContent(originalContent);
+
+    const existingHistory = editHistory[message.id] || [];
+    if (existingHistory.length === 0 || existingHistory[existingHistory.length - 1] !== originalContent) {
+      setEditHistory(prev => ({
+        ...prev,
+        [message.id]: [...existingHistory, originalContent]
+      }));
+      setHistoryIndex(prev => ({
+        ...prev,
+        [message.id]: (existingHistory.length)
+      }));
+    }
+
+    setTimeout(() => {
+      if (editTextareaRef.current) {
+        editTextareaRef.current.focus();
+        editTextareaRef.current.setSelectionRange(
+          editTextareaRef.current.value.length,
+          editTextareaRef.current.value.length
+        );
+      }
+    }, 0);
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    setEditContent(newContent);
+
+    if (editingMessageId) {
+      const currentHistory = editHistory[editingMessageId] || [];
+      const currentIndex = historyIndex[editingMessageId] || 0;
+
+      const updatedHistory = [...currentHistory.slice(0, currentIndex + 1), newContent];
+      setEditHistory(prev => ({
+        ...prev,
+        [editingMessageId]: updatedHistory
+      }));
+      setHistoryIndex(prev => ({
+        ...prev,
+        [editingMessageId]: updatedHistory.length - 1
+      }));
+    }
+  };
+
+  const handleUndo = () => {
+    if (!editingMessageId) return;
+
+    const currentHistory = editHistory[editingMessageId] || [];
+    const currentIndex = historyIndex[editingMessageId] || 0;
+
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1;
+      setEditContent(currentHistory[newIndex]);
+      setHistoryIndex(prev => ({
+        ...prev,
+        [editingMessageId]: newIndex
+      }));
+    }
+  };
+
+  const handleRedo = () => {
+    if (!editingMessageId) return;
+
+    const currentHistory = editHistory[editingMessageId] || [];
+    const currentIndex = historyIndex[editingMessageId] || 0;
+
+    if (currentIndex < currentHistory.length - 1) {
+      const newIndex = currentIndex + 1;
+      setEditContent(currentHistory[newIndex]);
+      setHistoryIndex(prev => ({
+        ...prev,
+        [editingMessageId]: newIndex
+      }));
+    }
   };
 
   const handleSaveEdit = () => {
@@ -149,9 +228,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
   };
 
   const handleCancelEdit = () => {
+    if (!editingMessageId) return;
+
+    const currentHistory = editHistory[editingMessageId] || [];
+    if (currentHistory.length > 0) {
+      setEditContent(currentHistory[0]);
+    }
+
     setEditingMessageId(null);
     setEditContent('');
   };
+
+  const canUndo = editingMessageId ? (historyIndex[editingMessageId] || 0) > 0 : false;
+  const canRedo = editingMessageId ? (historyIndex[editingMessageId] || 0) < (editHistory[editingMessageId] || []).length - 1 : false;
 
   if (!session) {
     return (
@@ -206,26 +295,62 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
               {editingMessageId === message.id ? (
                 <div className="p-4">
                   <textarea
+                    ref={editTextareaRef}
                     value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
+                    onChange={handleEditChange}
+                    onKeyDown={(e) => {
+                      if (e.ctrlKey || e.metaKey) {
+                        if (e.key === 'z' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleUndo();
+                        } else if ((e.key === 'y') || (e.key === 'z' && e.shiftKey)) {
+                          e.preventDefault();
+                          handleRedo();
+                        }
+                      }
+                      if (e.key === 'Escape') {
+                        handleCancelEdit();
+                      }
+                    }}
                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                     rows={Math.max(3, Math.ceil(editContent.length / 40))}
                     autoFocus
+                    style={{ minHeight: '80px', maxHeight: '200px' }}
                   />
-                  <div className="flex gap-2 mt-3 justify-end">
-                    <button
-                      onClick={handleCancelEdit}
-                      className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-                    >
-                      取消
-                    </button>
-                    <button
-                      onClick={handleSaveEdit}
-                      disabled={!editContent.trim()}
-                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                    >
-                      保存
-                    </button>
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleUndo}
+                        disabled={!canUndo}
+                        className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="撤销 (Ctrl+Z)"
+                      >
+                        ↩ 撤销
+                      </button>
+                      <button
+                        onClick={handleRedo}
+                        disabled={!canRedo}
+                        className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="重做 (Ctrl+Y)"
+                      >
+                        ↪ 重做
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleCancelEdit}
+                        className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                      >
+                        取消
+                      </button>
+                      <button
+                        onClick={handleSaveEdit}
+                        disabled={!editContent.trim()}
+                        className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                      >
+                        保存
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (
