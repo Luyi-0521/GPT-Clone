@@ -293,7 +293,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
               } rounded-lg shadow-sm`}
             >
               {editingMessageId === message.id ? (
-                <div className="p-4">
+                <div className="p-4 space-y-3">
                   <textarea
                     ref={editTextareaRef}
                     value={editContent}
@@ -312,17 +312,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
                         handleCancelEdit();
                       }
                     }}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full p-3 rounded-xl resize-none border-2 focus:outline-none transition-all duration-200 text-gray-900 bg-white/60 backdrop-blur-xl border-white/40 shadow-inner focus:border-blue-400/60 focus:bg-white/80"
                     rows={Math.max(3, Math.ceil(editContent.length / 40))}
                     autoFocus
                     style={{ minHeight: '80px', maxHeight: '200px' }}
                   />
-                  <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-200/50">
                     <div className="flex gap-2">
                       <button
                         onClick={handleUndo}
                         disabled={!canUndo}
-                        className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 text-xs font-medium bg-white/60 backdrop-blur-md text-gray-700 rounded-lg hover:bg-white/80 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed border border-gray-200/40 shadow-sm"
                         title="撤销 (Ctrl+Z)"
                       >
                         ↩ 撤销
@@ -330,7 +330,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
                       <button
                         onClick={handleRedo}
                         disabled={!canRedo}
-                        className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 text-xs font-medium bg-white/60 backdrop-blur-md text-gray-700 rounded-lg hover:bg-white/80 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed border border-gray-200/40 shadow-sm"
                         title="重做 (Ctrl+Y)"
                       >
                         ↪ 重做
@@ -339,14 +339,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
                     <div className="flex gap-2">
                       <button
                         onClick={handleCancelEdit}
-                        className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                        className="px-4 py-1.5 text-sm font-medium bg-gray-100/60 backdrop-blur-md text-gray-700 rounded-lg hover:bg-gray-200/60 transition-all duration-200 border border-gray-200/40 shadow-sm"
                       >
                         取消
                       </button>
                       <button
                         onClick={handleSaveEdit}
                         disabled={!editContent.trim()}
-                        className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                        className="px-4 py-1.5 text-sm font-medium bg-blue-600/80 backdrop-blur-md text-white rounded-lg hover:bg-blue-700/80 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed border border-blue-500/40 shadow-lg shadow-blue-500/20"
                       >
                         保存
                       </button>
