@@ -63,35 +63,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
       createdAt: new Date().toISOString(),
     };
 
-    const updatedSession = {
+    const userOnlySession = {
       ...session,
       messages: [...session.messages, userMessage],
     };
 
-    onUpdateSession(updatedSession);
+    onUpdateSession(userOnlySession);
     setInputValue('');
     setIsLoading(true);
 
-    // 重置文本框高度
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       setTextareaHeight(3);
     }
 
-    // 异步生成智能标题（不阻塞消息发送）
-    if (!session.isTitleManuallyEdited) {
-      generateSmartTitle(updatedSession.messages).then(smartTitle => {
-        if (smartTitle && smartTitle !== '新会话') {
-          const titledSession = { ...updatedSession, title: smartTitle };
-          onUpdateSession(titledSession);
-        }
-      }).catch(error => {
-        console.error('Failed to generate smart title:', error);
-      });
-    }
-
     try {
-      const aiResponse = await chatWithAI(updatedSession.messages, selectedModel);
+      const allMessagesWithUser = [...session.messages, userMessage];
+      const aiResponse = await chatWithAI(allMessagesWithUser, selectedModel);
       const aiMessage: Message = {
         id: `msg-${Date.now() + 1}`,
         content: aiResponse,
@@ -99,12 +87,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
         createdAt: new Date().toISOString(),
       };
 
-      const finalSession = {
-        ...updatedSession,
-        messages: [...updatedSession.messages, aiMessage],
-      };
+      const allMessages = [...allMessagesWithUser, aiMessage];
 
-      onUpdateSession(finalSession);
+      const shouldGenerateTitle = session.isTitleManuallyEdited !== true;
+      
+      if (shouldGenerateTitle) {
+        generateSmartTitle(allMessages).then(smartTitle => {
+          if (smartTitle && smartTitle !== '新会话' && smartTitle.length >= 2) {
+            const titledSession = { 
+              ...session, 
+              messages: allMessages,
+              title: smartTitle 
+            };
+            onUpdateSession(titledSession);
+            return;
+          }
+          
+          const finalSession = {
+            ...session,
+            messages: allMessages,
+          };
+          onUpdateSession(finalSession);
+        }).catch(error => {
+          console.error('Failed to generate smart title:', error);
+          const finalSession = {
+            ...session,
+            messages: allMessages,
+          };
+          onUpdateSession(finalSession);
+        });
+      } else {
+        const finalSession = {
+          ...session,
+          messages: allMessages,
+        };
+        onUpdateSession(finalSession);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: Message = {
@@ -115,8 +133,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
       };
 
       const errorSession = {
-        ...updatedSession,
-        messages: [...updatedSession.messages, errorMessage],
+        ...session,
+        messages: [...session.messages, userMessage, errorMessage],
       };
 
       onUpdateSession(errorSession);

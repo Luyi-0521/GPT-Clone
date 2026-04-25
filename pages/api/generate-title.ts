@@ -4,31 +4,35 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  console.log('[TitleAPI] Request received');
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { messages } = req.body;
+    console.log('[TitleAPI] Messages count:', messages?.length);
+    
     const API_KEY = process.env.AI_BUILDER_TOKEN || process.env.NEXT_PUBLIC_AI_BUILDER_TOKEN;
+    console.log('[TitleAPI] API Key configured:', !!API_KEY);
 
     if (!API_KEY) {
+      console.error('[TitleAPI] API key not configured');
       return res.status(500).json({ error: 'API key not configured' });
     }
 
     if (!messages || messages.length === 0) {
+      console.error('[TitleAPI] No messages provided');
       return res.status(400).json({ error: 'No messages provided' });
     }
-
-    const conversationSummary = messages
-      .map((msg: { role: string; content: string }) => `${msg.role}: ${msg.content}`)
-      .join('\n');
 
     const recentMessages = messages.slice(-6);
     const recentSummary = recentMessages
       .map((msg: { role: string; content: string }) => `${msg.role}: ${msg.content}`)
       .join('\n');
 
+    console.log('[TitleAPI] Calling AI Builders API...');
     const response = await fetch(
       'https://space.ai-builders.com/backend/v1/chat/completions',
       {
@@ -55,18 +59,23 @@ export default async function handler(
       }
     );
 
+    console.log('[TitleAPI] AI API response status:', response.status);
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('Title generation API error:', errorData);
+      console.error('[TitleAPI] AI API error:', errorData);
       return res.status(response.status).json(errorData);
     }
 
     const data = await response.json();
+    console.log('[TitleAPI] AI response data:', JSON.stringify(data).substring(0, 200));
+    
     const title = data.choices[0].message.content.trim();
+    console.log('[TitleAPI] Generated title:', title);
 
     return res.status(200).json({ title });
   } catch (error) {
-    console.error('Error in title generation:', error);
+    console.error('[TitleAPI] Error in title generation:', error);
     return res.status(500).json({ error: 'Failed to generate title' });
   }
 }

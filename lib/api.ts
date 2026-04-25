@@ -106,12 +106,15 @@ export const getAvailableModels = async () => {
 };
 
 export const generateSmartTitle = async (messages: Message[]): Promise<string> => {
+  console.log('[TitleGen] Starting title generation for', messages.length, 'messages');
   if (messages.length === 0) return '新会话';
 
   const userMessages = messages.filter(msg => msg.role === 'user');
+  console.log('[TitleGen] User messages count:', userMessages.length);
   if (userMessages.length === 0) return '新会话';
 
   try {
+    console.log('[TitleGen] Calling /api/generate-title...');
     const response = await fetch('/api/generate-title', {
       method: 'POST',
       headers: {
@@ -120,22 +123,29 @@ export const generateSmartTitle = async (messages: Message[]): Promise<string> =
       body: JSON.stringify({ messages }),
     });
 
+    console.log('[TitleGen] API response status:', response.status);
+
     if (!response.ok) {
       console.error('Title generation failed, falling back to simple method');
       return generateSimpleTitle(messages);
     }
 
     const data = await response.json();
+    console.log('[TitleGen] API response data:', data);
+    
     const aiTitle = data.title?.trim() || '';
+    console.log('[TitleGen] AI title:', aiTitle);
 
     if (aiTitle && aiTitle !== '新会话') {
       const cleanedTitle = aiTitle.replace(/^["'「『【《""]/g, '').replace(/["'」』】》""]$/g, '').trim();
+      console.log('[TitleGen] Cleaned title:', cleanedTitle);
       if (cleanedTitle.length >= 2) return cleanedTitle;
     }
 
+    console.log('[TitleGen] Falling back to simple title generation');
     return generateSimpleTitle(messages);
   } catch (error) {
-    console.error('Error generating smart title:', error);
+    console.error('[TitleGen] Error generating smart title:', error);
     return generateSimpleTitle(messages);
   }
 };
