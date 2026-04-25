@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Session, Message } from '../lib/types';
 import { chatWithAI, generateSmartTitle } from '../lib/api';
 
@@ -373,7 +375,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
                 </div>
               ) : (
                 <>
-                  <p className="whitespace-pre-wrap p-4">{message.content}</p>
+                  <div className="p-4 markdown-content">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
                   {message.editedAt && (
                     <div className={`px-4 pb-1 text-xs ${message.role === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
                       已编辑
