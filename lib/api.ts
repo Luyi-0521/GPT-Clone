@@ -1,8 +1,7 @@
 import { Message } from './types';
 
-// 使用正确的AI Builders API基础URL
 const API_BASE_URL = 'https://space.ai-builders.com/backend';
-const API_KEY = process.env.NEXT_PUBLIC_AI_BUILDER_TOKEN || '';
+const API_KEY = process.env.AI_BUILDER_TOKEN || process.env.NEXT_PUBLIC_AI_BUILDER_TOKEN || '';
 
 // 测试API连接的辅助函数
 export const testApiConnection = async (): Promise<boolean> => {
