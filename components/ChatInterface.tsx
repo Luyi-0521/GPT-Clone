@@ -18,6 +18,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
   const [editContent, setEditContent] = useState('');
   const [editHistory, setEditHistory] = useState<{[key: string]: string[]}>({});
   const [historyIndex, setHistoryIndex] = useState<{[key: string]: number}>({});
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -28,7 +29,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
     { id: 'supermind-agent-v1', name: 'Supermind Agent' },
     { id: 'kimi-k2.5', name: 'Kimi K2.5' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
-    { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash' },
+    { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash' }
   ];
 
   useEffect(() => {
@@ -39,7 +40,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // 自动调整文本框高度
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {
       const textarea = textareaRef.current;
@@ -62,12 +62,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
       id: `msg-${Date.now()}`,
       content: inputValue.trim(),
       role: 'user',
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     };
 
     const userOnlySession = {
       ...session,
-      messages: [...session.messages, userMessage],
+      messages: [...session.messages, userMessage]
     };
 
     onUpdateSession(userOnlySession);
@@ -86,11 +86,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
         id: `msg-${Date.now() + 1}`,
         content: aiResponse,
         role: 'assistant',
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
       };
 
       const allMessages = [...allMessagesWithUser, aiMessage];
-
       const shouldGenerateTitle = session.isTitleManuallyEdited !== true;
       
       if (shouldGenerateTitle) {
@@ -107,21 +106,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
           
           const finalSession = {
             ...session,
-            messages: allMessages,
+            messages: allMessages
           };
           onUpdateSession(finalSession);
         }).catch(error => {
           console.error('Failed to generate smart title:', error);
           const finalSession = {
             ...session,
-            messages: allMessages,
+            messages: allMessages
           };
           onUpdateSession(finalSession);
         });
       } else {
         const finalSession = {
           ...session,
-          messages: allMessages,
+          messages: allMessages
         };
         onUpdateSession(finalSession);
       }
@@ -131,12 +130,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
         id: `msg-${Date.now() + 1}`,
         content: '抱歉，无法连接到AI服务，请稍后重试。',
         role: 'assistant',
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
       };
 
       const errorSession = {
         ...session,
-        messages: [...session.messages, userMessage, errorMessage],
+        messages: [...session.messages, userMessage, errorMessage]
       };
 
       onUpdateSession(errorSession);
@@ -154,7 +153,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
 
   const handleStartEdit = (message: Message) => {
     setEditingMessageId(message.id);
-
     const originalContent = message.content;
     setEditContent(originalContent);
 
@@ -166,7 +164,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
       }));
       setHistoryIndex(prev => ({
         ...prev,
-        [message.id]: (existingHistory.length)
+        [message.id]: existingHistory.length
       }));
     }
 
@@ -249,14 +247,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
 
   const handleCancelEdit = () => {
     if (!editingMessageId) return;
-
-    const currentHistory = editHistory[editingMessageId] || [];
-    if (currentHistory.length > 0) {
-      setEditContent(currentHistory[0]);
-    }
-
     setEditingMessageId(null);
     setEditContent('');
+  };
+
+  const handleCopyMessage = async (message: Message) => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopiedMessageId(message.id);
+      setTimeout(() => {
+        setCopiedMessageId(null);
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
   };
 
   const canUndo = editingMessageId ? (historyIndex[editingMessageId] || 0) > 0 : false;
@@ -264,25 +268,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
 
   if (!session) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-            <h2 className="text-2xl font-medium text-gray-900">你好，需要我为你做些什么？</h2>
-            <p className="mt-2 text-gray-500">请创建新会话或选择一个会话开始聊天</p>
-          </div>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center glass-light rounded-3xl p-12 shadow-2xl">
+          <h2 className="text-3xl font-light text-gray-800 mb-3">你好，需要我为你做些什么？</h2>
+          <p className="text-gray-600 text-lg">请创建新会话或选择一个会话开始聊天</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-50">
-      <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
-        <h2 className="text-lg font-medium text-gray-900">{session.title}</h2>
+    <div className="flex-1 flex flex-col">
+      <div className="h-16 glass-light flex items-center justify-between px-8 border-b border-white/30">
+        <h2 className="text-xl font-medium text-gray-800">{session.title}</h2>
         <div className="flex items-center gap-4">
           <div className="relative">
             <select
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-md py-2 px-4 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="appearance-none glass px-5 py-2.5 pr-10 text-sm text-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#8fa3b8]/50 cursor-pointer"
             >
               {models.map((model) => (
                 <option key={model.id} value={model.id}>
@@ -290,16 +294,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-600">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-8 space-y-6">
         {session.messages.map((message) => (
           <div
             key={message.id}
@@ -307,13 +311,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
           >
             <div
               className={`max-w-[80%] relative ${
-                message.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-tr-none'
-                  : 'bg-white text-gray-900 rounded-tl-none border border-gray-200'
-              } rounded-lg shadow-sm`}
+                message.role === 'user' ? 'user-message' : 'ai-message'} rounded-2xl shadow-xl`}
             >
               {editingMessageId === message.id ? (
-                <div className="p-4 space-y-3">
+                <div className="p-5 space-y-3">
                   <textarea
                     ref={editTextareaRef}
                     value={editContent}
@@ -323,7 +324,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
                         if (e.key === 'z' && !e.shiftKey) {
                           e.preventDefault();
                           handleUndo();
-                        } else if ((e.key === 'y') || (e.key === 'z' && e.shiftKey)) {
+                        } else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) {
                           e.preventDefault();
                           handleRedo();
                         }
@@ -332,17 +333,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
                         handleCancelEdit();
                       }
                     }}
-                    className="w-full p-3 rounded-xl resize-none border-2 focus:outline-none transition-all duration-200 text-gray-900 bg-white/60 backdrop-blur-xl border-white/40 shadow-inner focus:border-blue-400/60 focus:bg-white/80"
+                    className="w-full p-4 rounded-2xl resize-none text-gray-800 glass-light border-2 border-white/40 focus:outline-none focus:border-[#8fa3b8]/50 shadow-inner"
                     rows={Math.max(3, Math.ceil(editContent.length / 40))}
                     autoFocus
                     style={{ minHeight: '80px', maxHeight: '200px' }}
                   />
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-200/50">
+                  <div className="flex items-center justify-between pt-3 border-t border-white/30">
                     <div className="flex gap-2">
                       <button
                         onClick={handleUndo}
                         disabled={!canUndo}
-                        className="px-3 py-1.5 text-xs font-medium bg-white/60 backdrop-blur-md text-gray-700 rounded-lg hover:bg-white/80 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed border border-gray-200/40 shadow-sm"
+                        className="px-4 py-2 text-sm font-medium glass text-gray-700 rounded-xl hover:bg-white/50 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                         title="撤销 (Ctrl+Z)"
                       >
                         ↩ 撤销
@@ -350,7 +351,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
                       <button
                         onClick={handleRedo}
                         disabled={!canRedo}
-                        className="px-3 py-1.5 text-xs font-medium bg-white/60 backdrop-blur-md text-gray-700 rounded-lg hover:bg-white/80 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed border border-gray-200/40 shadow-sm"
+                        className="px-4 py-2 text-sm font-medium glass text-gray-700 rounded-xl hover:bg-white/50 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                         title="重做 (Ctrl+Y)"
                       >
                         ↪ 重做
@@ -359,14 +360,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
                     <div className="flex gap-2">
                       <button
                         onClick={handleCancelEdit}
-                        className="px-4 py-1.5 text-sm font-medium bg-gray-100/60 backdrop-blur-md text-gray-700 rounded-lg hover:bg-gray-200/60 transition-all duration-200 border border-gray-200/40 shadow-sm"
+                        className="px-5 py-2 text-sm font-medium glass text-gray-700 rounded-xl hover:bg-white/50 transition-all duration-200"
                       >
                         取消
                       </button>
                       <button
                         onClick={handleSaveEdit}
                         disabled={!editContent.trim()}
-                        className="px-4 py-1.5 text-sm font-medium bg-blue-600/80 backdrop-blur-md text-white rounded-lg hover:bg-blue-700/80 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed border border-blue-500/40 shadow-lg shadow-blue-500/20"
+                        className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-[#8fa3b8] to-[#7a90a5] text-white rounded-xl hover:from-[#7a90a5] hover:to-[#6b8093] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#8fa3b8]/30"
                       >
                         保存
                       </button>
@@ -375,29 +376,50 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
                 </div>
               ) : (
                 <>
-                  <div className="p-4 markdown-content">
+                  <div className="p-5 markdown-content">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {message.content}
                     </ReactMarkdown>
                   </div>
                   {message.editedAt && (
-                    <div className={`px-4 pb-1 text-xs ${message.role === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
-                      已编辑
+                    <div className={`px-5 pb-2 text-xs ${message.role === 'user' ? 'text-white/70' : 'text-gray-500'}`}>
+                    已编辑
                     </div>
                   )}
-                  <button
-                    onClick={() => handleStartEdit(message)}
-                    className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded ${
-                      message.role === 'user'
-                        ? 'hover:bg-blue-500 text-blue-200'
-                        : 'hover:bg-gray-100 text-gray-400'
-                    }`}
-                    title="编辑消息"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
+                  <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    {message.role === 'user' && (
+                      <button
+                        onClick={() => handleStartEdit(message)}
+                        className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white/80 hover:text-white transition-all duration-200"
+                        title="编辑消息"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleCopyMessage(message)}
+                      className={`copy-btn p-2 rounded-xl transition-all duration-200 ${
+                        copiedMessageId === message.id
+                          ? 'bg-green-500/30 text-green-600'
+                          : message.role === 'user'
+                          ? 'bg-white/20 hover:bg-white/40 text-white/80 hover:text-white'
+                          : 'bg-white/40 hover:bg-white/60 text-gray-500 hover:text-gray-700'
+                      }`}
+                      title={copiedMessageId === message.id ? '已复制!' : '复制内容'}
+                    >
+                      {copiedMessageId === message.id ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012-2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </>
               )}
             </div>
@@ -406,11 +428,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] p-4 rounded-lg shadow-sm bg-white text-gray-900 rounded-tl-none border border-gray-200">
+            <div className="max-w-[80%] p-5 rounded-2xl shadow-xl ai-message">
               <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-3 h-3 bg-[#8fa3b8] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-3 h-3 bg-[#a8c0a4] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-3 h-3 bg-[#d4b8c8] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -419,7 +441,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="bg-white border-t border-gray-200 flex items-end px-6 py-4">
+      <div className="glass-light border-t border-white/30 flex items-end px-8 py-6">
         <div className="flex-1 relative">
           <textarea
             ref={textareaRef}
@@ -428,18 +450,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
             onKeyPress={handleKeyPress}
             onKeyDown={handleKeyPress}
             placeholder="输入消息... (Shift+Enter 换行，Enter 发送)"
-            className="w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-y-auto"
+            className="w-full p-5 glass border-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#8fa3b8]/40 text-gray-800 resize-none overflow-y-auto placeholder-gray-500"
             rows={textareaHeight}
-            style={{ minHeight: '48px', maxHeight: '200px' }}
+            style={{ minHeight: '56px', maxHeight: '200px' }}
           />
         </div>
         <button
           onClick={handleSendMessage}
           disabled={!inputValue.trim() || isLoading}
-          className="ml-4 bg-blue-600 text-white rounded-md py-2 px-6 hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 self-end"
+          className="ml-4 bg-gradient-to-r from-[#8fa3b8] to-[#7a90a5] text-white rounded-2xl py-3 px-8 hover:from-[#7a90a5] hover:to-[#6b8093] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 self-end shadow-lg shadow-[#8fa3b8]/30"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
           发送
         </button>

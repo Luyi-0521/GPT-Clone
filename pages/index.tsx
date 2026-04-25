@@ -62,7 +62,7 @@ const Home: React.FC = () => {
   const activeSessionData = sessions.find(session => session.id === activeSession);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen">
       <Sidebar 
         sessions={sessions}
         activeSession={activeSession}

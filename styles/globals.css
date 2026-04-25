@@ -4,21 +4,58 @@
 
 @layer base {
   body {
-    @apply font-sans text-gray-900 bg-gray-50;
+    @apply font-sans text-gray-800;
+    background: linear-gradient(135deg, #f7f2ed 0%, #e8dfd5 50%, #e1d8ce 100%);
+    min-height: 100vh;
   }
 }
 
 @layer components {
+  /* 毛玻璃基础样式 */
+  .glass {
+    @apply bg-white/30 backdrop-blur-xl border border-white/40 shadow-lg;
+  }
+  
+  .glass-light {
+    @apply bg-white/40 backdrop-blur-2xl border border-white/50 shadow-xl;
+  }
+  
+  .glass-dark {
+    @apply bg-white/25 backdrop-blur-xl border border-white/30 shadow-2xl;
+  }
+  
+  /* 莫兰迪配色 */
+  .morandi-blue {
+    @apply bg-[#8fa3b8] text-white;
+  }
+  
+  .morandi-green {
+    @apply bg-[#a8c0a4] text-white;
+  }
+  
+  .morandi-pink {
+    @apply bg-[#d4b8c8] text-white;
+  }
+  
+  .morandi-yellow {
+    @apply bg-[#e2d4b4] text-white;
+  }
+  
+  .morandi-gray {
+    @apply bg-[#c4c0bb] text-white;
+  }
+  
+  /* 消息气泡 */
   .message-bubble {
-    @apply max-w-[80%] p-4 rounded-lg shadow-sm;
+    @apply max-w-[80%] p-5 rounded-2xl shadow-xl;
   }
   
   .user-message {
-    @apply bg-blue-600 text-white rounded-tr-none;
+    @apply bg-gradient-to-br from-[#8fa3b8] to-[#7a90a5] text-white rounded-tr-md;
   }
   
   .ai-message {
-    @apply bg-white text-gray-900 rounded-tl-none border border-gray-200;
+    @apply bg-white/60 backdrop-blur-xl text-gray-800 rounded-tl-md border border-white/50;
   }
 
   .markdown-content {
@@ -26,21 +63,21 @@
   }
 
   .markdown-content h1 {
-    @apply text-2xl font-bold mt-4 mb-2 text-gray-900 border-b border-gray-200 pb-2;
+    @apply text-2xl font-bold mt-4 mb-3 text-gray-800 border-b border-white/40 pb-2;
   }
 
   .markdown-content h2 {
-    @apply text-xl font-semibold mt-3 mb-2 text-gray-900;
+    @apply text-xl font-semibold mt-3 mb-2 text-gray-800;
   }
 
   .markdown-content h3 {
-    @apply text-lg font-medium mt-2 mb-1 text-gray-900;
+    @apply text-lg font-medium mt-2 mb-1 text-gray-800;
   }
 
   .markdown-content h4, 
   .markdown-content h5, 
   .markdown-content h6 {
-    @apply text-base font-medium mt-2 mb-1 text-gray-900;
+    @apply text-base font-medium mt-2 mb-1 text-gray-800;
   }
 
   .markdown-content p {
@@ -64,14 +101,15 @@
   }
 
   .markdown-content li {
+    @apply mb-1;
   }
 
   .markdown-content code {
-    @apply bg-gray-100 text-pink-600 px-1.5 py-0.5 rounded text-xs font-mono;
+    @apply bg-white/50 text-[#9c7c8c] px-2 py-1 rounded-lg text-xs font-mono;
   }
 
   .markdown-content pre {
-    @apply bg-gray-800 text-gray-100 p-3 rounded-lg overflow-x-auto mb-3;
+    @apply bg-gray-800/80 text-gray-100 p-4 rounded-xl overflow-x-auto mb-3;
   }
 
   .markdown-content pre code {
@@ -79,15 +117,15 @@
   }
 
   .markdown-content blockquote {
-    @apply border-l-4 border-gray-300 pl-4 italic text-gray-600 my-3;
+    @apply border-l-4 border-[#a8c0a4] pl-4 italic text-gray-700 my-3 bg-white/20 py-2 pr-2 rounded-r-lg;
   }
 
   .markdown-content a {
-    @apply text-blue-600 hover:text-blue-800 underline;
+    @apply text-[#8fa3b8] hover:text-[#7a90a5] underline;
   }
 
   .markdown-content hr {
-    @apply border-t border-gray-200 my-4;
+    @apply border-t border-white/40 my-4;
   }
 
   .markdown-content table {
@@ -96,14 +134,23 @@
 
   .markdown-content th,
   .markdown-content td {
-    @apply border border-gray-200 px-3 py-2 text-left;
+    @apply border border-white/30 px-3 py-2 text-left;
   }
 
   .markdown-content th {
-    @apply bg-gray-100 font-semibold;
+    @apply bg-white/30 font-semibold text-gray-800;
   }
 
   .markdown-content img {
-    @apply max-w-full h-auto rounded-lg my-3;
+    @apply max-w-full h-auto rounded-xl my-3 shadow-lg;
+  }
+  
+  /* 复制按钮动画 */
+  .copy-btn {
+    @apply transition-all duration-200 hover:scale-110 active:scale-95;
+  }
+  
+  .copy-btn.copied {
+    @apply text-green-500;
   }
 }
