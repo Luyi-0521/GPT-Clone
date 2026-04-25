@@ -1,74 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Session, Message } from '../lib/types';
-import { chatWithAI } from '../lib/api';
+import { chatWithAI, generateSmartTitle } from '../lib/api';
 
 interface ChatInterfaceProps {
   session: Session | undefined;
   onUpdateSession: (session: Session) => void;
 }
 
-// 智能标题生成函数
-const generateSmartTitle = (messages: Message[]): string => {
-  if (messages.length === 0) return '新会话';
-
-  // 获取第一条用户消息作为基础
-  const firstUserMessage = messages.find(msg => msg.role === 'user');
-  if (!firstUserMessage) return '新会话';
-
-  const content = firstUserMessage.content.trim();
-
-  // 如果内容很短，直接使用
-  if (content.length <= 20) return content;
-
-  // 提取关键信息生成标题
-  const keywords = extractKeywords(content);
-  if (keywords.length > 0) {
-    return keywords.slice(0, 3).join('、');
-  }
-
-  // 如果没有关键词，截取前20个字符
-  return content.substring(0, 20);
-};
-
-// 提取关键词的辅助函数
-const extractKeywords = (content: string): string[] => {
-  const commonWords = ['的', '了', '是', '在', '有', '和', '或', '但', '不', '我', '你', '他', '她', '它', '这', '那', '个', '种', '些', '么', '呢', '吗', '啊', '吧', '哦', '嗯', '哈', '嘿'];
-  const questionWords = ['什么', '怎么', '如何', '为什么', '哪', '谁', '哪里', '何时', '多少', '怎样', '哪个', '如何', '怎么', '为什么'];
-  const actionWords = ['做', '写', '创建', '开发', '实现', '设计', '制作', '生成', '分析', '优化', '改进', '修改', '添加', '删除', '更新'];
-
-  const words = content.split(/[\s，。！？、；：,]+/).filter(word => word.length > 1);
-  const keywords: string[] = [];
-
-  for (const word of words) {
-    // 优先添加动作词
-    if (actionWords.includes(word) && !keywords.includes(word)) {
-      keywords.push(word);
-      if (keywords.length >= 3) break;
-      continue;
-    }
-
-    // 其次添加疑问词
-    if (questionWords.includes(word) && !keywords.includes(word)) {
-      keywords.push(word);
-      if (keywords.length >= 3) break;
-      continue;
-    }
-
-    // 最后添加其他非通用词
-    if (!commonWords.includes(word) && !keywords.includes(word) && word.length >= 2) {
-      keywords.push(word);
-      if (keywords.length >= 3) break;
-    }
-  }
-
-  return keywords;
-};
-
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession }) => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('grok-4-fast');
   const [textareaHeight, setTextareaHeight] = useState(3);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -115,13 +60,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
       createdAt: new Date().toISOString(),
     };
 
-    // 使用智能标题生成
-    const smartTitle = generateSmartTitle([...session.messages, userMessage]);
-
     const updatedSession = {
       ...session,
       messages: [...session.messages, userMessage],
-      title: session.title === '新会话' ? smartTitle : session.title,
     };
 
     onUpdateSession(updatedSession);
@@ -132,6 +73,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       setTextareaHeight(3);
+    }
+
+    // 异步生成智能标题（不阻塞消息发送）
+    if (session.title === '新会话') {
+      generateSmartTitle(updatedSession.messages).then(smartTitle => {
+        if (smartTitle && smartTitle !== '新会话') {
+          const titledSession = { ...updatedSession, title: smartTitle };
+          onUpdateSession(titledSession);
+        }
+      }).catch(error => {
+        console.error('Failed to generate smart title:', error);
+      });
     }
 
     try {
@@ -176,6 +129,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
     }
   };
 
+  const handleStartEdit = (message: Message) => {
+    setEditingMessageId(message.id);
+    setEditContent(message.content);
+  };
+
+  const handleSaveEdit = () => {
+    if (!session || !editingMessageId || !editContent.trim()) return;
+
+    const updatedMessages = session.messages.map(msg =>
+      msg.id === editingMessageId
+        ? { ...msg, content: editContent.trim(), editedAt: new Date().toISOString() }
+        : msg
+    );
+
+    onUpdateSession({ ...session, messages: updatedMessages });
+    setEditingMessageId(null);
+    setEditContent('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditContent('');
+  };
+
   if (!session) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -217,16 +194,63 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
         {session.messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} group`}
           >
             <div
-              className={`max-w-[80%] p-4 rounded-lg shadow-sm ${
+              className={`max-w-[80%] relative ${
                 message.role === 'user'
                   ? 'bg-blue-600 text-white rounded-tr-none'
                   : 'bg-white text-gray-900 rounded-tl-none border border-gray-200'
-              }`}
+              } rounded-lg shadow-sm`}
             >
-              <p className="whitespace-pre-wrap">{message.content}</p>
+              {editingMessageId === message.id ? (
+                <div className="p-4">
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    rows={Math.max(3, Math.ceil(editContent.length / 40))}
+                    autoFocus
+                  />
+                  <div className="flex gap-2 mt-3 justify-end">
+                    <button
+                      onClick={handleCancelEdit}
+                      className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                    >
+                      取消
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={!editContent.trim()}
+                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      保存
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="whitespace-pre-wrap p-4">{message.content}</p>
+                  {message.editedAt && (
+                    <div className={`px-4 pb-1 text-xs ${message.role === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
+                      已编辑
+                    </div>
+                  )}
+                  <button
+                    onClick={() => handleStartEdit(message)}
+                    className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded ${
+                      message.role === 'user'
+                        ? 'hover:bg-blue-500 text-blue-200'
+                        : 'hover:bg-gray-100 text-gray-400'
+                    }`}
+                    title="编辑消息"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ))}

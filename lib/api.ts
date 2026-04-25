@@ -104,3 +104,42 @@ export const getAvailableModels = async () => {
     return [];
   }
 };
+
+export const generateSmartTitle = async (messages: Message[]): Promise<string> => {
+  if (messages.length === 0) return '新会话';
+
+  const userMessages = messages.filter(msg => msg.role === 'user');
+  if (userMessages.length === 0) return '新会话';
+
+  try {
+    const response = await fetch('/api/generate-title', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messages }),
+    });
+
+    if (!response.ok) {
+      console.error('Title generation failed, falling back to simple method');
+      return generateSimpleTitle(messages);
+    }
+
+    const data = await response.json();
+    return data.title || generateSimpleTitle(messages);
+  } catch (error) {
+    console.error('Error generating smart title:', error);
+    return generateSimpleTitle(messages);
+  }
+};
+
+const generateSimpleTitle = (messages: Message[]): string => {
+  const firstUserMessage = messages.find(msg => msg.role === 'user');
+  if (!firstUserMessage) return '新会话';
+
+  const content = firstUserMessage.content.trim();
+
+  if (content.length <= 20) return content;
+
+  return content.substring(0, 20) + '...';
+};

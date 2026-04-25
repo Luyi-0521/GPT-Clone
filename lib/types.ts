@@ -3,6 +3,7 @@ export interface Message {
   content: string;
   role: 'user' | 'assistant';
   createdAt: string;
+  editedAt?: string;
 }
 
 export interface Session {
