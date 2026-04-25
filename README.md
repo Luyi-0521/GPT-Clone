@@ -1,4 +1,4 @@
-# ChatGPT Clone 项目文档
+# GPT Clone 项目文档
 
 ## 项目概述
 
@@ -114,4 +114,4 @@ interface Message {
 
 ***
 
-**感谢使用 ChatGPT Clone！** 我们希望这个应用能够为您提供优质的AI对话体验。
+**感谢使用GPT Clone！** 我们希望这个应用能够为您提供优质的AI对话体验。
