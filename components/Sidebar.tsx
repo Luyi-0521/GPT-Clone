@@ -134,10 +134,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
       </div>
-      <div className="p-4 border-t border-gray-200 text-xs text-gray-500">
-        <p>ChatGPT Clone</p>
-        <p className="mt-1">使用 AI Builders API</p>
-      </div>
     </div>
   );
 };
