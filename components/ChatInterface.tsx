@@ -431,8 +431,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
             <div className="max-w-[80%] p-5 rounded-2xl shadow-xl ai-message">
               <div className="flex space-x-2">
                 <div className="w-3 h-3 bg-[#8fa3b8] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-3 h-3 bg-[#a8c0a4] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-3 h-3 bg-[#d4b8c8] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-3 h-3 bg-[#a4b5c5] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-3 h-3 bg-[#7a90a5] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>

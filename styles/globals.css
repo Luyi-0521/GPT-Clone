@@ -5,7 +5,7 @@
 @layer base {
   body {
     @apply font-sans text-gray-800;
-    background: linear-gradient(135deg, #f7f2ed 0%, #e8dfd5 50%, #e1d8ce 100%);
+    background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #d7e3fc 100%);
     min-height: 100vh;
   }
 }
@@ -24,25 +24,21 @@
     @apply bg-white/25 backdrop-blur-xl border border-white/30 shadow-2xl;
   }
   
-  /* 莫兰迪配色 */
+  /* 协调的莫兰迪配色 - 蓝色系 */
   .morandi-blue {
     @apply bg-[#8fa3b8] text-white;
   }
   
-  .morandi-green {
-    @apply bg-[#a8c0a4] text-white;
+  .morandi-blue-light {
+    @apply bg-[#a4b5c5] text-white;
   }
   
-  .morandi-pink {
-    @apply bg-[#d4b8c8] text-white;
+  .morandi-blue-dark {
+    @apply bg-[#7a90a5] text-white;
   }
   
-  .morandi-yellow {
-    @apply bg-[#e2d4b4] text-white;
-  }
-  
-  .morandi-gray {
-    @apply bg-[#c4c0bb] text-white;
+  .morandi-purple {
+    @apply bg-[#a893b5] text-white;
   }
   
   /* 消息气泡 */
@@ -105,7 +101,7 @@
   }
 
   .markdown-content code {
-    @apply bg-white/50 text-[#9c7c8c] px-2 py-1 rounded-lg text-xs font-mono;
+    @apply bg-white/50 text-[#8fa3b8] px-2 py-1 rounded-lg text-xs font-mono;
   }
 
   .markdown-content pre {
@@ -117,7 +113,7 @@
   }
 
   .markdown-content blockquote {
-    @apply border-l-4 border-[#a8c0a4] pl-4 italic text-gray-700 my-3 bg-white/20 py-2 pr-2 rounded-r-lg;
+    @apply border-l-4 border-[#a4b5c5] pl-4 italic text-gray-700 my-3 bg-white/20 py-2 pr-2 rounded-r-lg;
   }
 
   .markdown-content a {
