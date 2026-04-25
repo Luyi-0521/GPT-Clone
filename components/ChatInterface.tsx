@@ -264,9 +264,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h2 className="text-2xl font-medium text-gray-900">你好，需要我为你做些什么？</h2>
-          <p className="mt-2 text-gray-500">请创建或选择一个会话开始聊天</p>
-        </div>
+            <h2 className="text-2xl font-medium text-gray-900">你好，需要我为你做些什么？</h2>
+            <p className="mt-2 text-gray-500">请创建新会话或选择一个会话开始聊天</p>
+          </div>
       </div>
     );
   }
