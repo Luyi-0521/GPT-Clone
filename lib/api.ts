@@ -126,20 +126,60 @@ export const generateSmartTitle = async (messages: Message[]): Promise<string> =
     }
 
     const data = await response.json();
-    return data.title || generateSimpleTitle(messages);
+    const aiTitle = data.title?.trim() || '';
+
+    if (aiTitle && aiTitle !== '新会话') {
+      const cleanedTitle = aiTitle.replace(/^["'「『【《""]/g, '').replace(/["'」』】》""]$/g, '').trim();
+      if (cleanedTitle.length >= 2) return cleanedTitle;
+    }
+
+    return generateSimpleTitle(messages);
   } catch (error) {
     console.error('Error generating smart title:', error);
     return generateSimpleTitle(messages);
   }
 };
 
+const extractKeywords = (content: string): string[] => {
+  const stopwords = new Set([
+    '的', '了', '是', '在', '我', '有', '和', '就', '不', '人', '都', '一', '一个',
+    '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有', '看', '好',
+    '自己', '这', '那', '什么', '这个', '那个', '怎么', '为什么', '啊', '呢', '吧',
+    '吗', '哦', '嗯', '对', '能', '还', '但', '而', '与', '及', '或', '如', '如果',
+    '请', '帮', '可以', '让', '给', '想', '做', '工作', '进行', '时候', '可能', '应该'
+  ]);
+
+  const words = content.split(/[\s，。！？、；：,.!?;:()（）{}""''""''\n\r]+/);
+  const keywords: string[] = [];
+
+  for (const word of words) {
+    const trimmed = word.trim();
+    if (trimmed.length >= 2 && !stopwords.has(trimmed) && !keywords.includes(trimmed)) {
+      keywords.push(trimmed);
+      if (keywords.length >= 5) break;
+    }
+  }
+
+  return keywords;
+};
+
 const generateSimpleTitle = (messages: Message[]): string => {
-  const firstUserMessage = messages.find(msg => msg.role === 'user');
-  if (!firstUserMessage) return '新会话';
+  const userMessages = messages.filter(msg => msg.role === 'user');
+  if (userMessages.length === 0) return '新会话';
 
-  const content = firstUserMessage.content.trim();
+  const allUserContent = userMessages.map(msg => msg.content.trim()).join(' ');
+  const keywords = extractKeywords(allUserContent);
 
-  if (content.length <= 20) return content;
+  if (keywords.length > 0) {
+    let title = keywords.slice(0, 4).join(' ');
+    if (title.length > 20) {
+      title = title.substring(0, 18) + '...';
+    }
+    if (title.length >= 2) return title;
+  }
 
-  return content.substring(0, 20) + '...';
+  const lastUserMessage = userMessages[userMessages.length - 1].content.trim();
+  if (lastUserMessage.length <= 20) return lastUserMessage;
+
+  return lastUserMessage.substring(0, 18) + '...';
 };

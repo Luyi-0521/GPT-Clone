@@ -24,6 +24,11 @@ export default async function handler(
       .map((msg: { role: string; content: string }) => `${msg.role}: ${msg.content}`)
       .join('\n');
 
+    const recentMessages = messages.slice(-6);
+    const recentSummary = recentMessages
+      .map((msg: { role: string; content: string }) => `${msg.role}: ${msg.content}`)
+      .join('\n');
+
     const response = await fetch(
       'https://space.ai-builders.com/backend/v1/chat/completions',
       {
@@ -37,15 +42,15 @@ export default async function handler(
           messages: [
             {
               role: 'system',
-              content: '你是一个专业的标题生成助手。根据用户和AI的对话内容，生成一个简洁、准确、能反映对话主题的中文标题。要求：1. 标题长度在5-15个字之间 2. 准确概括对话的核心主题 3. 使用自然、通顺的语言 4. 不要使用引号或特殊符号 5. 只返回标题，不要其他解释'
+              content: '你是一个专业的标题生成助手。根据对话内容生成标题。要求：1. 标题长度严格控制在10-20个汉字之间 2. 准确反映对话的核心主题和最新内容 3. 当对话涉及多个主题时，选择最重要或最新的主题 4. 使用自然、通顺的中文 5. 不要使用引号、冒号或其他特殊符号 6. 只返回标题本身文字，不要有其他解释 7. 标题应该简洁但有描述性'
             },
             {
               role: 'user',
-              content: `请为以下对话生成一个合适的标题：\n\n${conversationSummary}`
+              content: `请为以下对话生成一个标题（10-20字）：\n\n${recentSummary}`
             }
           ],
-          temperature: 0.7,
-          max_tokens: 50,
+          temperature: 0.5,
+          max_tokens: 30,
         }),
       }
     );

@@ -11,6 +11,7 @@ export interface Session {
   title: string;
   messages: Message[];
   createdAt: string;
+  isTitleManuallyEdited?: boolean;
 }
 
 export interface ModelConfig {

@@ -49,6 +49,16 @@ const Home: React.FC = () => {
     saveSessions(updatedSessions);
   };
 
+  const updateSessionTitle = (sessionId: string, title: string) => {
+    const updatedSessions = sessions.map(session =>
+      session.id === sessionId
+        ? { ...session, title, isTitleManuallyEdited: true }
+        : session
+    );
+    setSessions(updatedSessions);
+    saveSessions(updatedSessions);
+  };
+
   const activeSessionData = sessions.find(session => session.id === activeSession);
 
   return (
@@ -59,6 +69,7 @@ const Home: React.FC = () => {
         onCreateSession={createNewSession}
         onDeleteSession={deleteSession}
         onSelectSession={setActiveSession}
+        onUpdateSessionTitle={updateSessionTitle}
       />
       <ChatInterface 
         session={activeSessionData}

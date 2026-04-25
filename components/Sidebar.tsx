@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Session } from '../lib/types';
 
 interface SidebarProps {
@@ -7,6 +7,7 @@ interface SidebarProps {
   onCreateSession: () => void;
   onDeleteSession: (sessionId: string) => void;
   onSelectSession: (sessionId: string) => void;
+  onUpdateSessionTitle: (sessionId: string, title: string) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -15,7 +16,37 @@ const Sidebar: React.FC<SidebarProps> = ({
   onCreateSession,
   onDeleteSession,
   onSelectSession,
+  onUpdateSessionTitle,
 }) => {
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [editingTitleText, setEditingTitleText] = useState('');
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingTitleId && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [editingTitleId]);
+
+  const handleStartEditTitle = (session: Session) => {
+    setEditingTitleId(session.id);
+    setEditingTitleText(session.title);
+  };
+
+  const handleSaveTitle = () => {
+    if (editingTitleId && editingTitleText.trim()) {
+      onUpdateSessionTitle(editingTitleId, editingTitleText.trim());
+    }
+    setEditingTitleId(null);
+    setEditingTitleText('');
+  };
+
+  const handleCancelEditTitle = () => {
+    setEditingTitleId(null);
+    setEditingTitleText('');
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('zh-CN', {
@@ -41,29 +72,58 @@ const Sidebar: React.FC<SidebarProps> = ({
         {sessions.map((session) => (
           <div
             key={session.id}
-            className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+            className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors group ${
               activeSession === session.id ? 'bg-gray-100' : ''
             }`}
             onClick={() => onSelectSession(session.id)}
           >
             <div className="flex justify-between items-start">
-              <h3 className="font-medium text-gray-900 truncate max-w-[160px]">
-                {session.title}
-              </h3>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteSession(session.id);
-                }}
-                className="text-gray-400 hover:text-red-500 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              {editingTitleId === session.id ? (
+                <div className="flex-1 mr-2">
+                  <input
+                    ref={titleInputRef}
+                    type="text"
+                    value={editingTitleText}
+                    onChange={(e) => setEditingTitleText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveTitle();
+                      if (e.key === 'Escape') handleCancelEditTitle();
+                    }}
+                    onBlur={handleSaveTitle}
+                    className="w-full text-sm p-1 border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                  />
+                </div>
+              ) : (
+                <>
+                  <h3
+                    className="font-medium text-gray-900 truncate max-w-[140px] cursor-pointer"
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      handleStartEditTitle(session);
+                    }}
+                    title="双击编辑标题"
+                  >
+                    {session.title}
+                  </h3>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteSession(session.id);
+                    }}
+                    className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </>
+              )}
             </div>
-            <div className="mt-1 text-xs text-gray-500">
+            <div className="mt-1 text-xs text-gray-500 flex items-center gap-1">
               {formatDate(session.createdAt)}
+              {session.isTitleManuallyEdited && (
+                <span className="text-blue-400 text-xs" title="标题已手动编辑">✏️</span>
+              )}
             </div>
           </div>
         ))}

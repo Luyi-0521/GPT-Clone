@@ -79,7 +79,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ session, onUpdateSession 
     }
 
     // 异步生成智能标题（不阻塞消息发送）
-    if (session.title === '新会话') {
+    if (!session.isTitleManuallyEdited) {
       generateSmartTitle(updatedSession.messages).then(smartTitle => {
         if (smartTitle && smartTitle !== '新会话') {
           const titledSession = { ...updatedSession, title: smartTitle };
